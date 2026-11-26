@@ -1,14 +1,13 @@
 /* ============================================================
    MODABIR — Supabase configuration
    ------------------------------------------------------------
-   Replace BOTH values with the ones from your Supabase project:
-   Project Settings → API → Project URL / anon public key
+   Values come from Supabase → Project Settings → API Keys.
+   The publishable key is safe in a browser because Row Level
+   Security (RLS) protects every row.
 
    NEVER put the service_role / secret key here.
-   This file is public in the repository by design — the anon key
-   is safe because Row Level Security (RLS) protects every row.
    ============================================================ */
 window.MODABIR_CONFIG = {
-  supabaseUrl: '',
-  supabaseAnonKey: ''
+  supabaseUrl: 'https://trerhjtcbtpwdwhmeihe.supabase.co',
+  supabaseAnonKey: 'sb_publishable_TnUZooswQA3aI2AU7oP2Mg_F-Tjb1SO'
 };

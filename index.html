@@ -244,11 +244,17 @@
       <button type="button" data-lang="en">English</button>
     </div>
     <div id="authNotConfigured" class="note" hidden data-i18n="authNotConfigured"></div>
+    <button type="button" class="btn google" id="authGoogleBtn">
+      <span class="gmark" aria-hidden="true">G</span><span data-i18n="authGoogle"></span>
+    </button>
+    <div class="auth-divider"><span data-i18n="authOr"></span></div>
     <form id="authForm" onsubmit="return false">
       <div class="field"><label data-i18n="authEmail"></label><input type="email" id="authEmail" required autocomplete="email"></div>
       <button type="submit" class="btn primary" id="authSend" data-i18n="authSend"></button>
     </form>
+    <button type="button" class="link-btn" id="authRecoverBtn" data-i18n="authRecover"></button>
     <p id="authStatus" style="color:var(--cyan);min-height:24px;margin-top:12px"></p>
+    <p class="auth-secure-note" data-i18n="authSecureNote"></p>
   </div>
 </div>
 

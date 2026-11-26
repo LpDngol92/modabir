@@ -40,6 +40,13 @@ header{
 .btn.ghost{background:transparent}
 .btn.small{padding:6px 10px;font-size:12px;border-radius:9px}
 .btn.danger{border-color:#7f3543;color:#fda4af}
+.btn.google{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:#fff;color:#1f2937;border-color:#d1d5db;font-weight:700}
+.btn.google:disabled,.btn.primary:disabled{opacity:.6;cursor:wait;transform:none}
+.gmark{font-weight:900;font-size:18px;line-height:1;background:linear-gradient(45deg,#4285f4 0 33%,#34a853 33% 66%,#fbbc05 66% 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.auth-divider{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px;margin:12px 0}
+.auth-divider:before,.auth-divider:after{content:"";height:1px;background:var(--line);flex:1}
+.link-btn{border:0;background:transparent;color:var(--cyan);font-size:12px;font-weight:600;cursor:pointer;padding:8px;text-decoration:underline;margin-top:6px}
+.auth-secure-note{color:var(--muted);font-size:11px;line-height:1.6;margin:8px 0 0}
 .layout{display:grid;grid-template-columns:238px minmax(0,1fr);gap:22px;padding:22px;max-width:1440px;margin:auto}
 aside{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px;height:max-content;position:sticky;top:84px}
 .nav-title{color:var(--muted);font-size:11px;letter-spacing:1px;padding:10px 12px 6px;text-transform:uppercase}

@@ -202,6 +202,8 @@
     if (!db) {
       $('#authNotConfigured').hidden = false;
       $('#authForm').style.display = 'none';
+      $('#authGoogleBtn').hidden = true;
+      $('#authRecoverBtn').hidden = true;
       setGate(true);
       return;
     }
@@ -552,6 +554,8 @@
     if (!db) return;
     await db.auth.signOut();
   });
+  const redirectTo = () => location.origin + location.pathname;
+
   $('#authForm').addEventListener('submit', async e => {
     e.preventDefault();
     if (!db) { toast(t('authNotConfigured')); return; }
@@ -559,10 +563,32 @@
     if (!email) return;
     const btn = $('#authSend');
     btn.disabled = true;
-    const redirectTo = location.origin + location.pathname;
-    const { error } = await db.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo } });
+    const { error } = await db.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo() } });
     btn.disabled = false;
     $('#authStatus').textContent = error ? fill(t('authError'), { msg:error.message }) : t('authSent');
+  });
+
+  $('#authGoogleBtn').addEventListener('click', async () => {
+    if (!db) { toast(t('authNotConfigured')); return; }
+    const btn = $('#authGoogleBtn');
+    btn.disabled = true;
+    const { error } = await db.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: redirectTo(), queryParams: { prompt: 'select_account' } }
+    });
+    btn.disabled = false;
+    if (error) $('#authStatus').textContent = fill(t('authGoogleError'), { msg:error.message });
+  });
+
+  $('#authRecoverBtn').addEventListener('click', async () => {
+    if (!db) { toast(t('authNotConfigured')); return; }
+    const email = $('#authEmail').value.trim();
+    if (!email) { $('#authEmail').focus(); $('#authStatus').textContent = t('authEmail'); return; }
+    const btn = $('#authRecoverBtn');
+    btn.disabled = true;
+    const { error } = await db.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo() } });
+    btn.disabled = false;
+    $('#authStatus').textContent = error ? fill(t('authError'), { msg:error.message }) : t('authRecoverSent');
   });
 
   /* ---------- boot ---------- */
