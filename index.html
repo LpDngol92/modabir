@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b1220">
+<meta name="description" content="MODABIR — Smart Kingshot assistant by DONGOL. Arabic, English and extensible to any language.">
+<title>MODABIR — Smart Kingshot Assistant</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="app" aria-hidden="true">
+  <header>
+    <div class="logo">
+      <div class="mark">♛</div>
+      <div><span data-i18n="appName">مُدَبِّر</span><small data-i18n="tagline">مساعد ملوك البقاء الذكي</small></div>
+    </div>
+    <div class="header-spacer"></div>
+    <div class="lang-switch" aria-label="Language">
+      <button type="button" data-lang="ar" class="active">العربية</button>
+      <button type="button" data-lang="en">English</button>
+    </div>
+    <div class="chip" id="profileChip" data-i18n="profileEmpty">لم يتم إعداد الملف 👤</div>
+    <div class="chip" id="privacyChip" data-i18n="privacyBadge" hidden></div>
+    <button class="btn ghost small" id="logoutBtn" data-i18n="authLogout" hidden>تسجيل الخروج</button>
+    <button class="btn primary" id="setupBtn" data-i18n="setup">إعداد الملف / تعديله</button>
+  </header>
+
+  <div class="layout">
+    <aside>
+      <div class="nav-title" data-i18n="navMain">لوحة التحكم</div>
+      <button class="nav-btn active" data-go="overview"><span class="ico">🏠</span><span data-i18n="navOverview">نظرة عامة</span></button>
+      <button class="nav-btn" data-go="events"><span class="ico">🎯</span><span data-i18n="navEvents">الفعاليات الحالية</span></button>
+      <button class="nav-btn" data-go="command"><span class="ico">🏰</span><span data-i18n="navCommand">مركز القيادة</span></button>
+      <button class="nav-btn" data-go="bear"><span class="ico">🐻</span><span data-i18n="navBear">فعالية الدب</span></button>
+      <button class="nav-btn" data-go="priority"><span class="ico">⚡</span><span data-i18n="navPriority">الأولويات العاجلة</span></button>
+      <button class="nav-btn" data-go="quick"><span class="ico">📈</span><span data-i18n="navQuick">رفع القوة سريعاً</span></button>
+      <button class="nav-btn" data-go="profile"><span class="ico">🗂️</span><span data-i18n="navProfile">بياناتي والنسخ الاحتياطي</span></button>
+    </aside>
+
+    <main>
+      <!-- OVERVIEW -->
+      <section class="section active" id="overview">
+        <div class="hero">
+          <h1 id="greeting" data-i18n="heroTitle">أهلاً بك أيها الحاكم 👑</h1>
+          <p data-i18n="heroIntro"></p>
+          <div class="hero-grid" id="heroStats"></div>
+        </div>
+        <div class="grid">
+          <div class="card">
+            <h3 data-i18n="bearTimerTitle">🐻 العدّاد القادم</h3>
+            <p data-i18n="bearTimerSub"></p>
+            <div class="timer" id="bearCountdown">--:--:--</div>
+            <p id="bearNextLabel" style="margin-top:8px"></p>
+          </div>
+          <div class="card">
+            <h3 data-i18n="topActionTitle">⚡ أهم إجراء الآن</h3>
+            <div id="topAction"></div>
+          </div>
+          <div class="card">
+            <h3 data-i18n="todayEventTitle">🎯 فعالية اليوم</h3>
+            <div id="todayEvent"></div>
+          </div>
+        </div>
+        <div class="note" data-i18n="disclaimer"></div>
+        <div class="compliance">
+          <h3 data-i18n="complianceTitle"></h3>
+          <p data-i18n="complianceText"></p>
+        </div>
+      </section>
+
+      <!-- EVENTS -->
+      <section class="section" id="events">
+        <div class="sec-head">
+          <div><h2 data-i18n="eventsTitle"></h2><p data-i18n="eventsSub"></p></div>
+          <span class="badge b-info" data-i18n="allUtc"></span>
+        </div>
+        <div class="grid" id="eventsGrid"></div>
+      </section>
+
+      <!-- COMMAND -->
+      <section class="section" id="command">
+        <div class="sec-head">
+          <div><h2 data-i18n="commandTitle"></h2><p data-i18n="commandSub"></p></div>
+        </div>
+        <div class="grid" id="commandGrid"></div>
+      </section>
+
+      <!-- BEAR -->
+      <section class="section" id="bear">
+        <div class="sec-head">
+          <div><h2 data-i18n="bearTitle"></h2><p data-i18n="bearSub"></p></div>
+        </div>
+        <div class="grid">
+          <div class="card">
+            <h3 data-i18n="bearStartTitle"></h3>
+            <div class="timer" id="bearCountdown2">--:--:--</div>
+            <p id="bearRule"></p>
+          </div>
+          <div class="card">
+            <h3 data-i18n="bearStepsTitle"></h3>
+            <ul class="list" id="bearSteps"></ul>
+          </div>
+          <div class="card" style="grid-column:1/-1">
+            <h3 data-i18n="bearRankTitle"></h3>
+            <p data-i18n="bearRankDesc"></p>
+            <div class="member-row">
+              <div><label data-i18n="labelName"></label><input type="text" id="mName"></div>
+              <div><label data-i18n="labelInf"></label><input type="number" id="mInf"></div>
+              <div><label data-i18n="labelCav"></label><input type="number" id="mCav"></div>
+              <div><label data-i18n="labelArch"></label><input type="number" id="mArch"></div>
+              <div><label data-i18n="labelEg"></label><input type="number" id="mEg"></div>
+              <div><button class="btn primary small" id="addMemberBtn" data-i18n="addMember"></button></div>
+            </div>
+            <div id="bearTableWrap"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PRIORITY -->
+      <section class="section" id="priority">
+        <div class="sec-head">
+          <div><h2 data-i18n="priorityTitle"></h2><p data-i18n="prioritySub"></p></div>
+        </div>
+        <div class="card" id="priorityList"></div>
+      </section>
+
+      <!-- QUICK -->
+      <section class="section" id="quick">
+        <div class="sec-head">
+          <div><h2 data-i18n="quickTitle"></h2><p data-i18n="quickSub"></p></div>
+        </div>
+        <div class="grid">
+          <div class="card">
+            <h3 data-i18n="dailyTitle"></h3>
+            <ul class="check-list" id="dailyChecks"></ul>
+          </div>
+          <div class="card">
+            <h3 data-i18n="goldenTitle"></h3>
+            <ul class="list" id="goldRules"></ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- PROFILE -->
+      <section class="section" id="profile">
+        <div class="sec-head">
+          <div><h2 data-i18n="profileTitle"></h2><p data-i18n="profileSub"></p></div>
+        </div>
+        <div class="grid">
+          <div class="card">
+            <h3 data-i18n="summaryTitle"></h3>
+            <div id="profileSummary"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+              <button class="btn" id="exportBtn" data-i18n="exportBtn"></button>
+              <button class="btn" id="importBtn" data-i18n="importBtn"></button>
+              <input type="file" id="importFile" accept="application/json" hidden>
+              <button class="btn danger" id="resetBtn" data-i18n="resetBtn"></button>
+            </div>
+          </div>
+          <div class="card">
+            <h3 data-i18n="providerTitle"></h3>
+            <p data-i18n="providerDesc"></p>
+            <pre id="providerInfo"></pre>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer class="dashboard-footer">
+    <span data-i18n="manager"></span> • <span data-i18n="leadDev"></span> • © 2026 MODABIR
+  </footer>
+</div>
+
+<!-- SETUP DIALOG -->
+<dialog id="setupDialog">
+  <div class="dlg-head">
+    <h2 data-i18n="setupTitle"></h2>
+    <button type="button" class="btn ghost small" id="closeSetupTop" data-i18n="close"></button>
+  </div>
+  <form id="setupForm">
+    <div class="dlg-body">
+      <div class="group-title" data-i18n="groupIdentity"></div>
+      <div class="row">
+        <div class="field"><label data-i18n="fName"></label><input type="text" id="fName" required data-i18n-ph="fNamePh"></div>
+        <div class="field"><label data-i18n="fKingdom"></label><input type="number" id="fKingdom" required data-i18n-ph="fKingdomPh"></div>
+        <div class="field"><label data-i18n="fPlayerId"></label><input type="text" id="fPlayerId" data-i18n-ph="fPlayerIdPh"></div>
+        <div class="field"><label data-i18n="fAlliance"></label><input type="text" id="fAlliance" data-i18n-ph="fAlliancePh"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label data-i18n="fAge"></label><input type="number" id="fAge" min="0" value="30"></div>
+        <div class="field"><label data-i18n="fTown"></label><input type="number" id="fTown" min="1" max="30" value="10"></div>
+        <div class="field"><label data-i18n="fPower"></label><input type="number" id="fPower" min="0" value="0"></div>
+      </div>
+
+      <div class="group-title" data-i18n="groupTroops"></div>
+      <div class="row">
+        <div class="field"><label data-i18n="fInf"></label><input type="number" id="fInf" min="0" value="0"></div>
+        <div class="field"><label data-i18n="fCav"></label><input type="number" id="fCav" min="0" value="0"></div>
+        <div class="field"><label data-i18n="fArch"></label><input type="number" id="fArch" min="0" value="0"></div>
+        <div class="field"><label data-i18n="fTier"></label><input type="number" id="fTier" min="1" max="10" value="6"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label data-i18n="fGear"></label><input type="number" id="fGear" min="0" max="10" value="1"></div>
+        <div class="field"><label data-i18n="fBuild"></label><input type="number" id="fSpeedBuild" min="0" value="0"></div>
+        <div class="field"><label data-i18n="fResearch"></label><input type="number" id="fSpeedResearch" min="0" value="0"></div>
+        <div class="field"><label data-i18n="fTrain"></label><input type="number" id="fSpeedTrain" min="0" value="0"></div>
+      </div>
+
+      <div class="group-title" data-i18n="groupBear"></div>
+      <div class="row">
+        <div class="field"><label data-i18n="fBearDay"></label><select id="fBearDay"></select></div>
+        <div class="field"><label data-i18n="fBearTime"></label><input type="time" id="fBearTime" value="19:00"></div>
+        <div class="field"><label data-i18n="fRallyRule"></label>
+          <select id="fRallyRule">
+            <option value="power" data-i18n="rallyPower"></option>
+            <option value="score" data-i18n="rallyScore"></option>
+            <option value="rotation" data-i18n="rallyRotation"></option>
+            <option value="custom" data-i18n="rallyCustom"></option>
+          </select>
+        </div>
+        <div class="field"><label data-i18n="fRallyMax"></label><input type="number" id="fRallyMax" min="1" max="8" value="4"></div>
+      </div>
+      <div class="field"><label data-i18n="fRules"></label><textarea id="fRules" rows="2" data-i18n-ph="fRulesPh"></textarea></div>
+      <div class="note" data-i18n="setupNote"></div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn ghost" id="cancelSetup" data-i18n="cancel"></button>
+      <button type="submit" class="btn primary" data-i18n="save"></button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toast"></div>
+
+<!-- PRIVATE ACCESS GATE -->
+<div id="authGate" style="position:fixed;inset:0;z-index:200;background:rgba(5,10,20,.97);display:flex;align-items:center;justify-content:center;padding:20px">
+  <div class="card" style="max-width:440px;width:100%;text-align:center">
+    <h2 data-i18n="authTitle"></h2>
+    <p data-i18n="authDesc"></p>
+    <div class="lang-switch" aria-label="Language" style="margin:0 auto 14px;width:max-content">
+      <button type="button" data-lang="ar" class="active">العربية</button>
+      <button type="button" data-lang="en">English</button>
+    </div>
+    <div id="authNotConfigured" class="note" hidden data-i18n="authNotConfigured"></div>
+    <form id="authForm" onsubmit="return false">
+      <div class="field"><label data-i18n="authEmail"></label><input type="email" id="authEmail" required autocomplete="email"></div>
+      <button type="submit" class="btn primary" id="authSend" data-i18n="authSend"></button>
+    </form>
+    <p id="authStatus" style="color:var(--cyan);min-height:24px;margin-top:12px"></p>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/i18n.js"></script>
+<script src="assets/config.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
