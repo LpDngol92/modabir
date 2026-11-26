@@ -35,6 +35,54 @@
   let profile = null;
   let loadedFor = null;
   let saveChain = Promise.resolve();
+  let vaultKey = null;        // CryptoKey in memory only, never persisted
+  let vaultSaltB64 = null;
+  let encryptedPayload = null; // ciphertext object from DB when locked
+
+  /* ---------- client-side vault encryption (AES-GCM + PBKDF2) ---------- */
+  const ENC = { v:1, alg:'AES-GCM', kdf:'PBKDF2-SHA256', iter:210000 };
+  const te = new TextEncoder();
+  const td = new TextDecoder();
+  const b64e = buf => { let s=''; const b=new Uint8Array(buf); for(let i=0;i<b.length;i++) s+=String.fromCharCode(b[i]); return btoa(s); };
+  const b64d = s => Uint8Array.from(atob(s), c=>c.charCodeAt(0));
+  async function deriveKey(passphrase, saltB64) {
+    const salt = saltB64 ? b64d(saltB64) : crypto.getRandomValues(new Uint8Array(16));
+    const base = await crypto.subtle.importKey('raw', te.encode(passphrase), 'PBKDF2', false, ['deriveKey']);
+    const key = await crypto.subtle.deriveKey(
+      { name:'PBKDF2', salt, iterations:ENC.iter, hash:'SHA-256' },
+      base, { name:'AES-GCM', length:256 }, false, ['encrypt','decrypt']
+    );
+    return { key, saltB64: saltB64 || b64e(salt) };
+  }
+  async function encryptProfile(obj, passphrase, existingSaltB64) {
+    const { key, saltB64 } = await deriveKey(passphrase, existingSaltB64);
+    const payload = await encryptWithKey(obj, key, saltB64);
+    return { payload, key };
+  }
+  async function encryptWithKey(obj, key, saltB64) {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const pt = te.encode(JSON.stringify(obj));
+    const ct = await crypto.subtle.encrypt({ name:'AES-GCM', iv }, key, pt);
+    return { v:ENC.v, alg:ENC.alg, kdf:ENC.kdf, iter:ENC.iter, salt:saltB64, iv:b64e(iv), ct:b64e(ct) };
+  }
+  async function decryptProfile(payload, passphrase) {
+    if (!payload || payload.v !== 1 || !payload.ct || !payload.salt || !payload.iv) throw new Error('bad_payload');
+    const { key } = await deriveKey(passphrase, payload.salt);
+    const pt = await crypto.subtle.decrypt({ name:'AES-GCM', iv:b64d(payload.iv) }, key, b64d(payload.ct));
+    const obj = JSON.parse(td.decode(pt));
+    return { obj, key };
+  }
+  function isEncryptedPayload(d) { return !!(d && typeof d === 'object' && d.v === 1 && d.ct && d.iv && d.salt); }
+  function scrubSensitive() {
+    // remove any legacy plaintext profile cache
+    try { localStorage.removeItem('modabir_kingshot_profile_v1'); } catch(e){}
+    try {
+      for (let i=localStorage.length-1;i>=0;i--) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('modabir_daily_')) localStorage.removeItem(k);
+      }
+    } catch(e){}
+  }
 
   const DEFAULT = {
     name:'', kingdom:'', playerId:'', alliance:'', age:30, town:10, power:0,
@@ -144,21 +192,42 @@
       console.error('MODABIR load error:', error);
       toast(t('loadFailed'));
       profile = null;
+      encryptedPayload = null;
+      vaultKey = null;
     } else {
-      profile = data && data.data ? cleanProfile(data.data) : null;
-      if (profile) toast(t('loadedCloud'));
+      const d = data && data.data ? data.data : null;
+      if (isEncryptedPayload(d)) {
+        encryptedPayload = d;
+        profile = null;
+        vaultKey = null;
+        showVault('unlock');
+      } else if (d && typeof d === 'object' && Object.keys(d).length) {
+        // Legacy plaintext - keep in memory only until user sets vault passphrase
+        encryptedPayload = null;
+        profile = cleanProfile(d);
+        vaultKey = null;
+        showVault('migrate');
+        toast(t('loadedCloud'));
+      } else {
+        encryptedPayload = null;
+        profile = null;
+        vaultKey = null;
+        showVault('create');
+      }
     }
     renderAll();
   }
 
   function persist() {
     if (!user || !db) return Promise.resolve(false);
+    if (!vaultKey || !vaultSaltB64) { toast(t('vaultRequired')); showVault(encryptedPayload ? 'unlock' : (profile ? 'migrate' : 'create')); return Promise.resolve(false); }
     profile.updatedAt = new Date().toISOString();
     const snapshot = cleanProfile(profile);
     saveChain = saveChain.then(async () => {
+      const payload = await encryptWithKey(snapshot, vaultKey, vaultSaltB64);
       const { error } = await db.from(TABLE).upsert({
         user_id: user.id,
-        data: snapshot,
+        data: payload,
         updated_at: snapshot.updatedAt
       }, { onConflict: 'user_id' });
       if (error) {
@@ -166,6 +235,8 @@
         toast(t('saveFailed'));
         return false;
       }
+      encryptedPayload = payload;
+      scrubSensitive();
       renderProfile();
       return true;
     }).catch(err => {
@@ -176,13 +247,76 @@
     return saveChain;
   }
 
+  function setVaultVisible(show) {
+    const v = $('#vaultGate');
+    if (!v) return;
+    v.style.display = show ? 'flex' : 'none';
+    v.setAttribute('aria-hidden', String(!show));
+  }
+  function showVault(mode) {
+    // mode: create | unlock | migrate
+    const g = $('#vaultGate'); if (!g) return;
+    g.dataset.mode = mode;
+    $('#vaultTitle').textContent = t(mode === 'create' ? 'vaultCreateTitle' : mode === 'migrate' ? 'vaultMigrateTitle' : 'vaultUnlockTitle');
+    $('#vaultDesc').textContent = t(mode === 'create' ? 'vaultCreateDesc' : mode === 'migrate' ? 'vaultMigrateDesc' : 'vaultUnlockDesc');
+    $('#vaultPass').value = '';
+    $('#vaultPass2').value = '';
+    $('#vaultConfirmWrap').style.display = mode === 'unlock' ? 'none' : '';
+    $('#vaultStatus').textContent = '';
+    $('#vaultSubmit').textContent = t(mode === 'unlock' ? 'vaultUnlockBtn' : 'vaultCreateBtn');
+    setVaultVisible(true);
+  }
+  function hideVault() { setVaultVisible(false); $('#vaultStatus').textContent = ''; }
+
+  async function handleVaultSubmit(e) {
+    e.preventDefault();
+    if (!user || !db) return;
+    const mode = $('#vaultGate').dataset.mode || 'unlock';
+    const pass = $('#vaultPass').value;
+    const pass2 = $('#vaultPass2').value;
+    if (!pass || pass.length < 8) { $('#vaultStatus').textContent = t('vaultPassShort'); return; }
+    if (mode !== 'unlock' && pass !== pass2) { $('#vaultStatus').textContent = t('vaultPassMismatch'); return; }
+    const btn = $('#vaultSubmit'); btn.disabled = true;
+    try {
+      if (mode === 'unlock') {
+        if (!isEncryptedPayload(encryptedPayload)) throw new Error('no_payload');
+        const { obj, key } = await decryptProfile(encryptedPayload, pass);
+        vaultKey = key; vaultSaltB64 = encryptedPayload.salt;
+        profile = cleanProfile(obj);
+        hideVault();
+        scrubSensitive();
+        toast(t('loadedCloud'));
+        renderAll();
+      } else if (mode === 'migrate') {
+        const base = profile ? cleanProfile(profile) : cleanProfile(DEFAULT);
+        const { payload, key } = await encryptProfile(base, pass, null);
+        vaultKey = key; vaultSaltB64 = payload.salt; encryptedPayload = payload;
+        profile = base;
+        const ok = await persist();
+        if (ok) { hideVault(); toast(t('vaultSaved')); renderAll(); }
+      } else { // create
+        const base = cleanProfile(DEFAULT);
+        const { payload, key } = await encryptProfile(base, pass, null);
+        vaultKey = key; vaultSaltB64 = payload.salt; encryptedPayload = payload; profile = base;
+        const { error } = await db.from(TABLE).upsert({ user_id: user.id, data: payload, updated_at: base.updatedAt || new Date().toISOString() }, { onConflict:'user_id' });
+        if (error) throw error;
+        hideVault(); scrubSensitive(); toast(t('vaultSaved')); renderAll();
+      }
+    } catch (err) {
+      console.error('MODABIR vault error:', err);
+      $('#vaultStatus').textContent = mode === 'unlock' ? t('vaultWrongPass') : t('vaultError');
+    } finally { btn.disabled = false; }
+  }
+
   async function activateSession(session) {
     const next = session && session.user ? session.user : null;
     if (!next) {
       user = null;
       loadedFor = null;
       profile = null;
+      vaultKey = null; vaultSaltB64 = null; encryptedPayload = null;
       $('#authStatus').textContent = '';
+      hideVault();
       setGate(true);
       renderAll();
       return;
@@ -192,6 +326,8 @@
     setGate(false);
     if (changed) {
       loadedFor = next.id;
+      vaultKey = null; vaultSaltB64 = null; encryptedPayload = null; profile = null;
+      hideVault();
       await loadProfile();
     } else {
       renderAll();
@@ -590,6 +726,8 @@
     btn.disabled = false;
     $('#authStatus').textContent = error ? fill(t('authError'), { msg:error.message }) : t('authRecoverSent');
   });
+
+  $('#vaultForm').addEventListener('submit', handleVaultSubmit);
 
   /* ---------- boot ---------- */
   buildDayOptions();

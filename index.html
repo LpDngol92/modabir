@@ -234,6 +234,21 @@
 
 <div id="toast"></div>
 
+<!-- VAULT GATE (client-side encryption) -->
+<div id="vaultGate" style="position:fixed;inset:0;z-index:210;background:rgba(5,10,20,.97);display:none;align-items:center;justify-content:center;padding:20px" aria-hidden="true">
+  <div class="card" style="max-width:460px;width:100%;text-align:center">
+    <h2 id="vaultTitle"></h2>
+    <p id="vaultDesc"></p>
+    <form id="vaultForm" onsubmit="return false">
+      <div class="field"><label data-i18n="vaultPassLabel"></label><input type="password" id="vaultPass" autocomplete="new-password" required minlength="8"></div>
+      <div class="field" id="vaultConfirmWrap"><label data-i18n="vaultPassConfirm"></label><input type="password" id="vaultPass2" autocomplete="new-password" minlength="8"></div>
+      <button type="submit" class="btn primary" id="vaultSubmit"></button>
+    </form>
+    <p id="vaultStatus" style="color:#fda4af;min-height:24px;margin-top:12px"></p>
+    <p class="auth-secure-note" data-i18n="vaultNote"></p>
+  </div>
+</div>
+
 <!-- PRIVATE ACCESS GATE -->
 <div id="authGate" style="position:fixed;inset:0;z-index:200;background:rgba(5,10,20,.97);display:flex;align-items:center;justify-content:center;padding:20px">
   <div class="card" style="max-width:440px;width:100%;text-align:center">
