@@ -5,7 +5,7 @@
 - **Manager / المدير:** DONGOL
 - **Lead Developer / المطور الرئيسي:** DONGOL
 
-Live site: `https://LpDngol92.github.io/modabir/`
+Live site: `https://lpdngol92.github.io/modabir/`
 
 ---
 
